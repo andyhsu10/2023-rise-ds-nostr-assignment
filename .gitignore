@@ -1,0 +1,15 @@
+# testing
+/coverage
+
+# production
+/build
+/dist
+
+# local env files
+.env*
+!.env.example
+
+# misc
+.DS_Store
+*.pem
+*.p12

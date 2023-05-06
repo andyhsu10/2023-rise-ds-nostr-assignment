@@ -5,3 +5,7 @@
 * Go: v1.20
 
 ## Getting Started
+
+* Example public and secret keys
+  - Public key: `04d7f44979ac5f7738bd54161f7a2ccbce353c1450c2507d8ddcc0a2f5bbcb8e`
+  - Secret key: `78fe12de0e7a943e0c2df19bf3878bf137bf11db62e981396e983e506caa300c`
