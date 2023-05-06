@@ -1,2 +1,7 @@
-# 2023-rise-ds-nostr-assignment
-The repository for submitting the assignments.
+# 2023 RISE - Distributed Systems Assignment
+
+## Prerequisites
+
+* Go: v1.20
+
+## Getting Started
