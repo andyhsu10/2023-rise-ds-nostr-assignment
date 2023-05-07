@@ -34,7 +34,7 @@ func main() {
 	reader := bufio.NewReader(os.Stdin)
 	var pk string
 	var b [65]byte
-	fmt.Printf("Using relay: %s\n--------\nPlease enter you public key to subscribe to type 1 event: ", config.RelayUrl)
+	fmt.Printf("Using relay: %s\n--------\nPlease enter your public key to subscribe to type 1 event: ", config.RelayUrl)
 	if n, err := reader.Read(b[:]); err == nil {
 		pk = strings.TrimSpace(string(b[:n]))
 	} else {
@@ -89,16 +89,15 @@ func main() {
 		CreatedAt: nostr.Now(),
 		Kind:      1,
 		Content:   strings.TrimRight(strings.TrimSpace(content), "\r\n"),
+		Tags:      []nostr.Tag{{"p", pk, config.RelayUrl}},
 	}
 	event.Sign(sk)
 	relay.Publish(ctx, event)
 
-	fmt.Printf("Publishing event to %s:\n%s\n", config.RelayUrl, event)
+	fmt.Printf("Publishing event to %s:\n%s\n\n", config.RelayUrl, event)
 
-	go func() {
-		<-sub.EndOfStoredEvents
-		fmt.Println("Canceling subscription")
-		// The subscription is closed when context ctx is cancelled ("CLOSE" in NIP-01).
-		cancel()
-	}()
+	fmt.Println("Canceling subscription and close connection to relay.")
+	// The subscription is closed when context ctx is cancelled ("CLOSE" in NIP-01).
+	cancel()
+	relay.Close()
 }
