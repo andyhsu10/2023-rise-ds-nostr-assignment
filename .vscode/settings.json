@@ -1,0 +1,10 @@
+{
+  // Tell VSCode to format files on save
+  "editor.formatOnSave": true,
+  // Tell VSCode to use Prettier as default file formatter
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  "editor.tabSize": 2,
+  "go.gopath": "~/.gvm/pkgsets/go1.20.4/global",
+  "go.goroot": "~/.gvm/gos/go1.20.4"
+}

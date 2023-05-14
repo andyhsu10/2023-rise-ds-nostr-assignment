@@ -24,6 +24,14 @@
 
 ➡️ The failures might come from the number of WebSocket concurrent connections. Compared to traditional HTTP requests, WebSocket connections consume more resources, which can lead to performance degradation if the number of concurrent connections is too high. In such cases, traditional server architectures may not be able to handle the load and could crash, requiring specialized architectures to mitigate the issue.
 
+### Phase 2
+
+1. Why did you choose this database?
+➡️ 
+
+2. If the number of events to be stored will be huge, what would you do to scale the database?
+➡️ 
+
 ## References
 
 * [nbd-wtf/go-nostr](https://github.com/nbd-wtf/go-nostr)
