@@ -2,15 +2,15 @@
 
 ## Prerequisites
 
-* Go: v1.20
+- Go: v1.20
 
 ## Getting Started
 
-* Example public and private keys
+- Example public and private keys
   - Public key: `04d7f44979ac5f7738bd54161f7a2ccbce353c1450c2507d8ddcc0a2f5bbcb8e`
   - Private key: `78fe12de0e7a943e0c2df19bf3878bf137bf11db62e981396e983e506caa300c`
-* Copy `.env.example` to `.env` and fill in the values
-* Start the example client by: `go run example_client.go`
+- Copy `.env.example` to `.env` and fill in the values
+- Start the example client by: `go run example_client.go`
 
 ## Questions
 
@@ -24,15 +24,15 @@
 
 ➡️ The failures might come from the number of WebSocket concurrent connections. Compared to traditional HTTP requests, WebSocket connections consume more resources, which can lead to performance degradation if the number of concurrent connections is too high. In such cases, traditional server architectures may not be able to handle the load and could crash, requiring specialized architectures to mitigate the issue.
 
-### Phase 2
+### Phase 2 (Still trying to save subscription data to a database... Others are working fine.)
 
 1. Why did you choose this database?
-➡️ 
+   ➡️
 
 2. If the number of events to be stored will be huge, what would you do to scale the database?
-➡️ 
+   ➡️
 
 ## References
 
-* [nbd-wtf/go-nostr](https://github.com/nbd-wtf/go-nostr)
-* [NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md)
+- [nbd-wtf/go-nostr](https://github.com/nbd-wtf/go-nostr)
+- [NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md)

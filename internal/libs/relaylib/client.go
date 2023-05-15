@@ -3,6 +3,7 @@ package relaylib
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -46,6 +47,21 @@ type User struct {
 	Addr string
 }
 
+type Request struct {
+	Action string
+	Data   string
+}
+
+type Event struct {
+	ID        string   `json:"id"`
+	Pubkey    string   `json:"pubkey"`
+	CreatedAt int      `json:"created_at"`
+	Kind      int      `json:"kind"`
+	Tags      []string `json:"tags"`
+	Content   string   `json:"content"`
+	Sig       string   `json:"sig"`
+}
+
 // readPump pumps messages from the websocket connection to the hub.
 //
 // The application runs readPump in a per-connection goroutine. The application
@@ -70,12 +86,52 @@ func (c *Client) ReadPump() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		data := map[string][]byte{
-			"message": message,
-			"id":      []byte(c.ID),
+
+		var data []json.RawMessage
+		err = json.Unmarshal([]byte(message), &data)
+		if err != nil {
+			fmt.Println("Error:", err)
+			continue
 		}
-		userMessage, _ := json.Marshal(data)
-		c.Room.Broadcast <- userMessage
+
+		if len(data) < 2 {
+			fmt.Println("Invalid JSON structure")
+			continue
+		}
+
+		var req Request
+		err = json.Unmarshal(data[0], &req.Action)
+		if err != nil {
+			fmt.Println("Error:", err)
+			continue
+		}
+
+		if req.Action == "EVENT" && len(data) == 3 {
+			err = json.Unmarshal(data[1], &req.Data)
+			if err != nil {
+				fmt.Println("Error:", err)
+				continue
+			}
+
+			msg := map[string][]byte{
+				"message": []byte("[\"EVENT\", \"" + req.Data + "\", " + string(data[2]) + "]"),
+				"id":      []byte(c.ID),
+			}
+			userMessage, _ := json.Marshal(msg)
+			c.Room.Broadcast <- userMessage
+		} else if req.Action == "REQ" {
+			err = json.Unmarshal(data[1], &req.Data)
+			if err != nil {
+				fmt.Println("Error:", err)
+				continue
+			}
+
+			msg := []byte("[\"EOSE\", \"" + req.Data + "\"]")
+			c.Send <- msg
+		} else if req.Action == "CLOSE" {
+			break
+		}
+
 	}
 }
 

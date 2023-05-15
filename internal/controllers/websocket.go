@@ -105,6 +105,9 @@ func (c *wsController) Home(ctx *gin.Context) {
 		// new goroutines.
 		go client.WritePump()
 		go client.ReadPump()
+
+		msg := []byte("[\"EOSE\", \"" + roomName + "\"]")
+		client.Send <- msg
 	}
 }
 
