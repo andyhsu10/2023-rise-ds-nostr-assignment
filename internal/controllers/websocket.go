@@ -1,9 +1,10 @@
 package controllers
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"distrise/internal/libs/relaylib"
 	"distrise/internal/services"
@@ -20,11 +21,44 @@ var upgrader = websocket.Upgrader{
 }
 
 type WsController interface {
-	Home(hub *relaylib.Hub, ctx *gin.Context)
+	Home(ctx *gin.Context)
 }
 
 type wsController struct {
-	ws services.WsService
+	ws    services.WsService
+	rooms map[*relaylib.Room]bool
+}
+
+type RequestFilter struct {
+	Ids      *[]string `json:"ids,omitempty"`
+	Authors  *[]string `json:"authors,omitempty"`
+	Kinds    *[]int    `json:"kinds,omitempty"`
+	EventIds *[]string `json:"#e,omitempty"`
+	Pubkeys  *[]string `json:"#p,omitempty"`
+	Since    *int      `json:"since,omitempty"`
+	Until    *int      `json:"until,omitempty"`
+	Limit    *int      `json:"limit,omitempty"`
+}
+
+type RequestMessage struct {
+	Action       string `json:"action"`
+	Subscription string `json:"subscription"`
+	Filters      *RequestFilter
+}
+
+func (r *RequestMessage) UnmarshalJSON(buf []byte) error {
+	tmp := []interface{}{&r.Action, &r.Subscription, &r.Filters}
+
+	desiredLength := len(tmp)
+	if err := json.Unmarshal(buf, &tmp); err != nil {
+		return err
+	}
+
+	if g, e := len(tmp), desiredLength; g != e {
+		return fmt.Errorf("wrong number of fields in RequestMessage: %d != %d", g, e)
+	}
+
+	return nil
 }
 
 func NewWsController() (WsController, error) {
@@ -32,32 +66,66 @@ func NewWsController() (WsController, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &wsController{ws: srv.Ws}, nil
+
+	return &wsController{
+		ws:    srv.Ws,
+		rooms: make(map[*relaylib.Room]bool),
+	}, nil
 }
 
-func (controller *wsController) Home(hub *relaylib.Hub, ctx *gin.Context) {
+func (c *wsController) Home(ctx *gin.Context) {
 	conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	client := &relaylib.Client{
-		Hub: hub,
-		Conn: conn,
-		Send: make(chan []byte, 256),
+	_, message, _ := conn.ReadMessage()
+	var msg RequestMessage
+	json.Unmarshal(message, &msg)
+
+	if msg.Action == "REQ" {
+		roomName := msg.Subscription
+
+		room := c.findRoomByName(roomName)
+		if room == nil {
+			room = c.createRoom(roomName)
+		}
+
+		client := &relaylib.Client{
+			Room: room,
+			Conn: conn,
+			Send: make(chan []byte, 256),
+		}
+
+		client.Room.Register <- client
+		client.ID = GenUserId()
+		client.Addr = conn.RemoteAddr().String()
+
+		// Allow collection of memory referenced by the caller by doing all work in
+		// new goroutines.
+		go client.WritePump()
+		go client.ReadPump()
+	}
+}
+
+func (c *wsController) findRoomByName(name string) *relaylib.Room {
+	var foundRoom *relaylib.Room
+	for room := range c.rooms {
+		if room.Name == name {
+			foundRoom = room
+			break
+		}
 	}
 
-	client.Hub.Register <- client
-	client.ID = GenUserId()
-	client.Addr = conn.RemoteAddr().String()
-	client.EnterAt = time.Now()
+	return foundRoom
+}
 
-	// Allow collection of memory referenced by the caller by doing all work in
-	// new goroutines.
-	go client.WritePump()
-	go client.ReadPump()
+func (c *wsController) createRoom(name string) *relaylib.Room {
+	room := relaylib.NewRoom(name)
+	go room.Run()
+	c.rooms[room] = true
 
-	client.Send <- []byte("Welcome")
+	return room
 }
 
 func GenUserId() string {

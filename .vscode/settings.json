@@ -6,5 +6,8 @@
 
   "editor.tabSize": 2,
   "go.gopath": "~/.gvm/pkgsets/go1.20.4/global",
-  "go.goroot": "~/.gvm/gos/go1.20.4"
+  "go.goroot": "~/.gvm/gos/go1.20.4",
+  "[go]": {
+    "editor.defaultFormatter": "golang.go"
+  }
 }

@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"distrise/internal/controllers"
-	"distrise/internal/libs/relaylib"
 )
 
 func InitWsRouter(engine *gin.Engine, path string) error {
@@ -14,12 +13,7 @@ func InitWsRouter(engine *gin.Engine, path string) error {
 	}
 	group := engine.Group(path)
 
-	hub := relaylib.NewHub()
-	go hub.Run()
-
-	group.GET("/", func(c *gin.Context) {
-		ctl.Ws.Home(hub, c)
-	})
+	group.GET("/", ctl.Ws.Home)
 
 	return nil
 }

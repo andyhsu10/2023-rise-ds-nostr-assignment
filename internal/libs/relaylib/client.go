@@ -9,7 +9,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-
 const (
 	// Time allowed to write a message to the peer.
 	writeWait = 10 * time.Second
@@ -31,7 +30,7 @@ var (
 
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
-	Hub *Hub
+	Room *Room
 
 	// The websocket connection.
 	Conn *websocket.Conn
@@ -43,9 +42,8 @@ type Client struct {
 }
 
 type User struct {
-	ID      string
-	Addr    string
-	EnterAt time.Time
+	ID   string
+	Addr string
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -55,13 +53,14 @@ type User struct {
 // reads from this goroutine.
 func (c *Client) ReadPump() {
 	defer func() {
-		c.Hub.Unregister <- c
+		c.Room.Unregister <- c
 		c.Conn.Close()
 	}()
 
 	c.Conn.SetReadLimit(maxMessageSize)
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+
 	for {
 		_, message, err := c.Conn.ReadMessage()
 		if err != nil {
@@ -76,7 +75,7 @@ func (c *Client) ReadPump() {
 			"id":      []byte(c.ID),
 		}
 		userMessage, _ := json.Marshal(data)
-		c.Hub.Broadcast <- userMessage
+		c.Room.Broadcast <- userMessage
 	}
 }
 
