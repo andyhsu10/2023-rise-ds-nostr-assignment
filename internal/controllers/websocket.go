@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"distrise/internal/databases"
 	"distrise/internal/libs/relaylib"
 	"distrise/internal/services"
 
@@ -79,6 +80,11 @@ func (c *wsController) Home(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
+	db, err := databases.GetDB()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	_, message, _ := conn.ReadMessage()
 	var msg RequestMessage
 	json.Unmarshal(message, &msg)
@@ -95,6 +101,7 @@ func (c *wsController) Home(ctx *gin.Context) {
 			Room: room,
 			Conn: conn,
 			Send: make(chan []byte, 256),
+			DB:   db,
 		}
 
 		client.Room.Register <- client

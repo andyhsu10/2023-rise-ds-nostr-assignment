@@ -2,12 +2,17 @@ package relaylib
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"time"
 
+	"github.com/cockroachdb/cockroach-go/v2/crdb/crdbgorm"
 	"github.com/gorilla/websocket"
+	"gorm.io/gorm"
+
+	"distrise/internal/models"
 )
 
 const (
@@ -40,6 +45,8 @@ type Client struct {
 	Send chan []byte
 
 	User
+
+	DB *gorm.DB
 }
 
 type User struct {
@@ -113,6 +120,21 @@ func (c *Client) ReadPump() {
 				continue
 			}
 
+			// Save to DB
+			if err := crdbgorm.ExecuteTx(context.Background(), c.DB, nil,
+				func(tx *gorm.DB) error {
+					if err := c.DB.Create(&models.CoreEvent{Name: req.Data, Data: string(data[2])}).Error; err != nil {
+						fmt.Println("Error:", err)
+						return err
+					}
+					return nil
+				},
+			); err != nil {
+				// For information and reference documentation, see:
+				//   https://www.cockroachlabs.com/docs/stable/error-handling-and-troubleshooting.html
+				fmt.Println("Error:", err)
+			}
+
 			msg := map[string][]byte{
 				"message": []byte("[\"EVENT\", \"" + req.Data + "\", " + string(data[2]) + "]"),
 				"id":      []byte(c.ID),
@@ -129,6 +151,8 @@ func (c *Client) ReadPump() {
 			msg := []byte("[\"EOSE\", \"" + req.Data + "\"]")
 			c.Send <- msg
 		} else if req.Action == "CLOSE" {
+			c.Room.Unregister <- c
+			c.Conn.Close()
 			break
 		}
 

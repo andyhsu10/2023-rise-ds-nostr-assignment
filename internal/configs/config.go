@@ -16,11 +16,16 @@ var configInstance *Config
 
 // Config object
 type Config struct {
+	Database   *Database
 	Env        string `env:"ENV"`
 	RelayUrl   string `env:"RELAY_URL"`
 	PublicKey  string `env:"PUBLIC_KEY"`
 	PrivateKey string `env:"PRIVATE_KEY"`
 	Server     *Server
+}
+
+type Database struct {
+	URL string
 }
 
 type Server struct {
@@ -44,6 +49,9 @@ func newConfig() (*Config, error) {
 	}
 
 	return &Config{
+		Database: &Database{
+			URL: os.Getenv("DB_URL"),
+		},
 		Env:        os.Getenv("ENV"),
 		RelayUrl:   os.Getenv("RELAY_URL"),
 		PublicKey:  os.Getenv("PUBLIC_KEY"),
