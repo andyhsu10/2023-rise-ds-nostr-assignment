@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Go: v1.20
+- Go: v1.20.4
 
 ## Getting Started
 
@@ -25,8 +25,9 @@
 ### Phase 3
 
 - Copy `.env.example` to `.env` and fill in the values
-- Start the cockroach DB by: `docker compose up -d`
+- Start the RabbitMQ and cockroach DB by: `docker compose up -d`
 - Start the aggregator by: `make aggregate`
+- To see the events stored in DB: `make view`
 
 ## Questions
 
@@ -58,6 +59,12 @@ Thanks to lots of online golang & websocket tutorials and sharings from peers sa
 
 ### Phase 3
 
+1. Why did you choose this database? Is it the same or different database as the one you used in Phase 2? Why is it the same or a different one?
+   ➡️
+
+2. If the number of events to be stored will be huge, what would you do to scale the database?
+   ➡️
+
 ## References
 
 - [nbd-wtf/go-nostr](https://github.com/nbd-wtf/go-nostr)
@@ -66,3 +73,4 @@ Thanks to lots of online golang & websocket tutorials and sharings from peers sa
 - [Multi-room Chat Application With WebSockets In Go And Vue.js (Part 2)](https://dev.to/jeroendk/multi-room-chat-application-with-websockets-in-go-and-vue-js-part-2-3la8)
 - [Cockroach Labs - Start a single-node cluster](https://www.cockroachlabs.com/docs/stable/start-a-local-cluster-in-docker-linux.html#start-a-single-node-cluster)
 - [Build a Go App with CockroachDB and GORM](https://www.cockroachlabs.com/docs/v22.2/build-a-go-app-with-cockroachdb-gorm)
+- [RabbitMQ tutorial - "Hello World!"](https://www.rabbitmq.com/tutorials/tutorial-one-go.html)
