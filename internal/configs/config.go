@@ -16,12 +16,13 @@ var configInstance *Config
 
 // Config object
 type Config struct {
-	Database   *Database
-	Env        string `env:"ENV"`
-	RelayUrl   string `env:"RELAY_URL"`
-	PublicKey  string `env:"PUBLIC_KEY"`
-	PrivateKey string `env:"PRIVATE_KEY"`
-	Server     *Server
+	Database    *Database
+	Env         string `env:"ENV"`
+	RabbitMqURL string `env:"RABBITMQ_URL"`
+	RelayUrl    string `env:"RELAY_URL"`
+	PublicKey   string `env:"PUBLIC_KEY"`
+	PrivateKey  string `env:"PRIVATE_KEY"`
+	Server      *Server
 }
 
 type Database struct {
@@ -52,10 +53,11 @@ func newConfig() (*Config, error) {
 		Database: &Database{
 			URL: os.Getenv("DB_URL"),
 		},
-		Env:        os.Getenv("ENV"),
-		RelayUrl:   os.Getenv("RELAY_URL"),
-		PublicKey:  os.Getenv("PUBLIC_KEY"),
-		PrivateKey: os.Getenv("PRIVATE_KEY"),
+		Env:         os.Getenv("ENV"),
+		RabbitMqURL: os.Getenv("RABBITMQ_URL"),
+		RelayUrl:    os.Getenv("RELAY_URL"),
+		PublicKey:   os.Getenv("PUBLIC_KEY"),
+		PrivateKey:  os.Getenv("PRIVATE_KEY"),
 		Server: &Server{
 			Port: os.Getenv("SERVER_PORT"),
 			Cors: strings.Split(os.Getenv("CORS_ORIGIN_WHITELIST"), ","),

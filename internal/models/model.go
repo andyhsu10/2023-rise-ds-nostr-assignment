@@ -12,8 +12,9 @@ type BaseModel struct {
 
 type CoreEvent struct {
 	BaseModel
-	Name string `json:"name"`
-	Data string `json:"data"`
+	RelayURL string `json:"relay_url"`
+	Name     string `json:"name"`
+	Data     string `json:"data"`
 }
 
 // BeforeCreate will set a UUID rather than numeric ID.
