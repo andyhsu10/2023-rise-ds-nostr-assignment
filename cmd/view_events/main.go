@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	aggregator.Aggregate()
+	aggregator.View()
 }

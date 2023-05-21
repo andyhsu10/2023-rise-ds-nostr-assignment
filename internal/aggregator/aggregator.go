@@ -3,9 +3,11 @@ package aggregator
 import (
 	"context"
 	"distrise/internal/client"
+	"distrise/internal/configs"
 	"distrise/internal/databases"
 	"distrise/internal/models"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/nbd-wtf/go-nostr"
@@ -23,7 +25,7 @@ func failOnError(err error, msg string) {
 	}
 }
 
-func Aggregator() {
+func Aggregate() {
 	// Connect to database
 	db, err := databases.GetDB()
 	if err != nil {
@@ -121,5 +123,29 @@ func Aggregator() {
 				})
 			failOnError(err, "Failed to publish a message")
 		}
+	}
+}
+
+func View() {
+	config := configs.GetConfig()
+
+	// Connect to database
+	db, err := databases.GetDB()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	filter := models.CoreEvent{
+		RelayURL: config.RelayUrl,
+	}
+
+	var events []models.CoreEvent
+	res := db.Where(&filter).Order("created_at DESC").Find(&events)
+	if res.Error != nil {
+		log.Fatal(res.Error)
+	}
+
+	for _, event := range events {
+		fmt.Printf("Event: %v\n\n", event)
 	}
 }
