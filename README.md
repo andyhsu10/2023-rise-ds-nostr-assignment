@@ -60,10 +60,10 @@ Thanks to lots of online golang & websocket tutorials and sharings from peers sa
 ### Phase 3
 
 1. Why did you choose this database? Is it the same or different database as the one you used in Phase 2? Why is it the same or a different one?
-   ➡️
+   ➡️ I'm still using Cockroach DB, same as Phase 2. The reason for the same one simply because I haven't been familiar with it, so I want to see how it works more and try to use it in the following assignments.
 
 2. If the number of events to be stored will be huge, what would you do to scale the database?
-   ➡️
+   ➡️ I might consider using sharding to scale the database. Shard the database by the event type, and each shard can be stored in a different node.
 
 ## References
 
