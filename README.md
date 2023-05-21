@@ -22,6 +22,12 @@
 - The relay will be running on "ws://localhost:8080"
 - To view the built-in CockroachDB admin UI, visit "http://localhost:8081"
 
+### Phase 3
+
+- Copy `.env.example` to `.env` and fill in the values
+- Start the cockroach DB by: `docker compose up -d`
+- Start the aggregator by: `make aggregate`
+
 ## Questions
 
 ### Phase 1
@@ -49,6 +55,8 @@ Questions:
 Self-reflection:
 
 Thanks to lots of online golang & websocket tutorials and sharings from peers save me, golang newbie 😅, a lot of time on this assignment. I underestimated the difficulty of the tech stack I selected to finish this assignment. I need to spend more time understanding the basics of golang, like goroutine, channel, etc. Also, spending time using docker compose to build a Cockroach DB cluster would be a good idea too. It might be a fundamental requirement for future assignments.
+
+### Phase 3
 
 ## References
 

@@ -25,7 +25,7 @@ func main() {
 	config := configs.GetConfig()
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 
-	relay, err := client.GetClient(ctx)
+	relay, err := client.GetClient(ctx, "")
 	if err != nil {
 		panic(err)
 	}
