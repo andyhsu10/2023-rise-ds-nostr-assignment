@@ -29,6 +29,13 @@
 - Start the aggregator by: `make aggregate`
 - To see the events stored in DB: `make view`
 
+### Phase 4
+
+- Copy `.env.example` to `.env` and fill in the values. To set up multiple relays, set the value of `RELAY_URLS` to a comma-separated list of relay URLs.
+- Start the RabbitMQ and cockroach DB by: `docker compose up -d`
+- Start the aggregator by: `make aggregate`
+- To see the events stored in DB: `make view`
+
 ## Questions
 
 ### Phase 1
@@ -68,6 +75,22 @@ Thanks to lots of online golang & websocket tutorials and sharings from peers sa
 2. If the number of events to be stored will be huge, what would you do to scale the database?
 
 ➡️ I might consider using sharding to scale the database. Shard the database by the event type, and each shard can be stored in a different node.
+
+### Phase 4
+
+Please provide a short writeup of why you chose a particular Queue or Event Stream system for Phase 4, answering the following questions:
+
+1. Why did you choose this solution?
+
+➡️ I choose RabbitMQ rather than other kinds of Queue, like Kafka, because I think it is the best fit for this assignment. Using Kafka might be a little bit overkill. Also, storing the events in a queue is like a buffer, the data don't need to be stored after being processed, but because of the retention setting of Kafka, the data will be stored for a period of time. I think RabbitMQ is a better choice for this assignment.
+
+2. If the number of events to be stored will be huge, what would you do to scale your chosen solution?
+
+➡️ I will consider multiple steps to scale. First, I will increase the memory size of the RabbitMQ instance and run more consumers. Second, using a cluster of RabbitMQ instances. Third, using a cluster of RabbitMQ instances and sharding the events by the event type. Finally, if the whole event throughput is higher than the database capability, I will consider scaling up the database discussed earlier.
+
+Self-reflection:
+
+I forgot to check the test cases listed on the Notion page, so the aggregator only meets the requirements of the assignment. I will try to fix this in the following days.
 
 ## References
 
