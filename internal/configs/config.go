@@ -17,11 +17,12 @@ var configInstance *Config
 // Config object
 type Config struct {
 	Database    *Database
-	Env         string `env:"ENV"`
-	RabbitMqURL string `env:"RABBITMQ_URL"`
-	RelayUrl    string `env:"RELAY_URL"`
-	PublicKey   string `env:"PUBLIC_KEY"`
-	PrivateKey  string `env:"PRIVATE_KEY"`
+	Env         string   `env:"ENV"`
+	RabbitMqURL string   `env:"RABBITMQ_URL"`
+	RelayUrl    string   `env:"RELAY_URL"`
+	RelayUrls   []string `env:"RELAY_URLS"`
+	PublicKey   string   `env:"PUBLIC_KEY"`
+	PrivateKey  string   `env:"PRIVATE_KEY"`
 	Server      *Server
 }
 
@@ -56,6 +57,7 @@ func newConfig() (*Config, error) {
 		Env:         os.Getenv("ENV"),
 		RabbitMqURL: os.Getenv("RABBITMQ_URL"),
 		RelayUrl:    os.Getenv("RELAY_URL"),
+		RelayUrls:   strings.Split(os.Getenv("RELAY_URLS"), ","),
 		PublicKey:   os.Getenv("PUBLIC_KEY"),
 		PrivateKey:  os.Getenv("PRIVATE_KEY"),
 		Server: &Server{

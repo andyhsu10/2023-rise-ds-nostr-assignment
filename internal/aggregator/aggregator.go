@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/nbd-wtf/go-nostr"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -25,68 +26,49 @@ func failOnError(err error, msg string) {
 	}
 }
 
-func Aggregate() {
+func consumer(ch *amqp.Channel, name string) {
 	// Connect to database
 	db, err := databases.GetDB()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Connect to RabbitMQ, and initiate a queue
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	failOnError(err, "Failed to connect to RabbitMQ")
-	defer conn.Close()
-
-	ch, err := conn.Channel()
-	failOnError(err, "Failed to open a channel")
-	defer ch.Close()
-
-	q, err := ch.QueueDeclare(
-		"distrise_events", // name
-		false,             // durable
-		false,             // delete when unused
-		false,             // exclusive
-		false,             // no-wait
-		nil,               // arguments
-	)
-	failOnError(err, "Failed to declare a queue")
-
 	// Consume message from RabbitMQ
 	msgs, err := ch.Consume(
-		q.Name, // queue
-		"",     // consumer
-		true,   // auto-ack
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // args
+		name,  // queue
+		"",    // consumer
+		true,  // auto-ack
+		false, // exclusive
+		false, // no-local
+		false, // no-wait
+		nil,   // args
 	)
 	failOnError(err, "Failed to register a consumer")
 
-	go func() {
-		for d := range msgs {
-			var msg DistriseMessage
-			err := json.Unmarshal(d.Body, &msg)
+	for d := range msgs {
+		var msg DistriseMessage
+		err := json.Unmarshal(d.Body, &msg)
 
-			if err == nil {
-				event := models.CoreEvent{
-					RelayURL: msg.RelayURL,
-					Data:     msg.Event.String(),
-				}
-				err := db.Create(&event).Error
+		if err == nil {
+			event := models.CoreEvent{
+				RelayURL: msg.RelayURL,
+				Data:     msg.Event.String(),
+			}
+			err := db.Create(&event).Error
 
-				if err != nil {
-					log.Println("Error:", err)
-				} else {
-					log.Printf("Event saved to database: %v\n\n", event)
-				}
+			if err != nil {
+				log.Println("Error:", err)
+			} else {
+				log.Printf("Event saved to database: %v\n\n", event)
 			}
 		}
-	}()
+	}
+}
 
+func publisher(ch *amqp.Channel, relayUrl string, name string) {
 	// Initiate nostr client
 	ctx := context.Background()
-	relay, err := client.GetClient(ctx, "")
+	relay, err := client.GetClient(ctx, relayUrl)
 	if err != nil {
 		panic(err)
 	}
@@ -113,10 +95,10 @@ func Aggregate() {
 		// Publish message to RabbitMQ
 		if err == nil {
 			err = ch.PublishWithContext(ctx,
-				"",     // exchange
-				q.Name, // routing key
-				false,  // mandatory
-				false,  // immediate
+				"",    // exchange
+				name,  // routing key
+				false, // mandatory
+				false, // immediate
 				amqp.Publishing{
 					ContentType: "text/plain",
 					Body:        marshalMsg,
@@ -124,6 +106,44 @@ func Aggregate() {
 			failOnError(err, "Failed to publish a message")
 		}
 	}
+}
+
+func Aggregate() {
+	queueName := "distrise_events"
+	config := configs.GetConfig()
+
+	// Connect to RabbitMQ, and initiate a queue
+	conn, err := amqp.Dial(config.RabbitMqURL)
+	failOnError(err, "Failed to connect to RabbitMQ")
+	defer conn.Close()
+
+	ch, err := conn.Channel()
+	failOnError(err, "Failed to open a channel")
+	defer ch.Close()
+
+	_, err = ch.QueueDeclare(
+		queueName, // name
+		false,     // durable
+		false,     // delete when unused
+		false,     // exclusive
+		false,     // no-wait
+		nil,       // arguments
+	)
+	failOnError(err, "Failed to declare a queue named: "+queueName)
+
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+
+	// Start consumer
+	go consumer(ch, queueName)
+
+	// Start publisher
+	for _, relayUrl := range config.RelayUrls {
+		log.Printf("Starting publisher for relay: %v\n", relayUrl)
+		go publisher(ch, relayUrl, queueName)
+	}
+
+	wg.Wait()
 }
 
 func View() {
