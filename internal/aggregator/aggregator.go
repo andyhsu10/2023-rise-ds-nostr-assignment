@@ -13,12 +13,16 @@ import (
 
 	"github.com/nbd-wtf/go-nostr"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 )
 
 type DistriseMessage struct {
 	RelayURL string      `json:"relay_url"`
 	Event    nostr.Event `json:"event"`
 }
+
+var tracer = otel.Tracer("aggregator")
 
 func failOnError(err error, msg string) {
 	if err != nil {
@@ -27,9 +31,15 @@ func failOnError(err error, msg string) {
 }
 
 func consumer(ch *amqp.Channel, name string) {
+	ctx := context.Background()
+	_, span := tracer.Start(ctx, "consumer")
+	defer span.End()
+
 	// Connect to database
 	db, err := databases.GetDB()
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		log.Fatal(err)
 	}
 
@@ -43,6 +53,11 @@ func consumer(ch *amqp.Channel, name string) {
 		false, // no-wait
 		nil,   // args
 	)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
 	failOnError(err, "Failed to register a consumer")
 
 	for d := range msgs {
@@ -57,6 +72,8 @@ func consumer(ch *amqp.Channel, name string) {
 			err := db.Create(&event).Error
 
 			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 				log.Println("Error:", err)
 			} else {
 				log.Printf("Event saved to database: %v\n\n", event)
@@ -68,8 +85,14 @@ func consumer(ch *amqp.Channel, name string) {
 func publisher(ch *amqp.Channel, relayUrl string, name string) {
 	// Initiate nostr client
 	ctx := context.Background()
+
+	_, span := tracer.Start(ctx, "publisher")
+	defer span.End()
+
 	relay, err := client.GetClient(ctx, relayUrl)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		panic(err)
 	}
 
@@ -80,6 +103,8 @@ func publisher(ch *amqp.Channel, relayUrl string, name string) {
 
 	sub, err := relay.Subscribe(ctx, filters)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		panic(err)
 	}
 

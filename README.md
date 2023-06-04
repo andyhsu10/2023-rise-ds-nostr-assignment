@@ -92,6 +92,16 @@ Self-reflection:
 
 I forgot to check the test cases listed on the Notion page, so the aggregator only meets the requirements of the assignment. I will try to fix this in the following days.
 
+### Phase 5
+
+Please provide a short writeup of why you chose these metrics, answering the following questions:
+
+1. Why did you choose these 5 metrics?
+
+2. What kind of errors or issues do you expect them to help you monitor?
+
+3. If you had more time, what other tools would you use or metrics would you instrument and why?
+
 ## References
 
 - [nbd-wtf/go-nostr](https://github.com/nbd-wtf/go-nostr)
