@@ -10,6 +10,8 @@ import (
 
 	"github.com/cockroachdb/cockroach-go/v2/crdb/crdbgorm"
 	"github.com/gorilla/websocket"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 	"gorm.io/gorm"
 
 	"distrise/internal/models"
@@ -74,10 +76,13 @@ type Event struct {
 // The application runs readPump in a per-connection goroutine. The application
 // ensures that there is at most one reader on a connection by executing all
 // reads from this goroutine.
-func (c *Client) ReadPump() {
+func (c *Client) ReadPump(ctx context.Context) {
+	_, span := otel.Tracer("wsController").Start(ctx, "ReadPump")
+
 	defer func() {
 		c.Room.Unregister <- c
 		c.Conn.Close()
+		span.End()
 	}()
 
 	c.Conn.SetReadLimit(maxMessageSize)
@@ -90,6 +95,9 @@ func (c *Client) ReadPump() {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
 			}
+
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
@@ -98,11 +106,15 @@ func (c *Client) ReadPump() {
 		err = json.Unmarshal([]byte(message), &data)
 		if err != nil {
 			fmt.Println("Error:", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			continue
 		}
 
 		if len(data) < 2 {
 			fmt.Println("Invalid JSON structure")
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			continue
 		}
 
@@ -110,6 +122,8 @@ func (c *Client) ReadPump() {
 		err = json.Unmarshal(data[0], &req.Action)
 		if err != nil {
 			fmt.Println("Error:", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			continue
 		}
 
@@ -117,6 +131,8 @@ func (c *Client) ReadPump() {
 			err = json.Unmarshal(data[1], &req.Data)
 			if err != nil {
 				fmt.Println("Error:", err)
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 				continue
 			}
 
@@ -125,6 +141,8 @@ func (c *Client) ReadPump() {
 				func(tx *gorm.DB) error {
 					if err := c.DB.Create(&models.CoreEvent{Name: req.Data, Data: string(data[2])}).Error; err != nil {
 						fmt.Println("Error:", err)
+						span.RecordError(err)
+						span.SetStatus(codes.Error, err.Error())
 						return err
 					}
 					return nil
@@ -133,6 +151,8 @@ func (c *Client) ReadPump() {
 				// For information and reference documentation, see:
 				//   https://www.cockroachlabs.com/docs/stable/error-handling-and-troubleshooting.html
 				fmt.Println("Error:", err)
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 			}
 
 			msg := map[string][]byte{
@@ -145,6 +165,8 @@ func (c *Client) ReadPump() {
 			err = json.Unmarshal(data[1], &req.Data)
 			if err != nil {
 				fmt.Println("Error:", err)
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 				continue
 			}
 
@@ -164,12 +186,15 @@ func (c *Client) ReadPump() {
 // A goroutine running writePump is started for each connection. The
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
-func (c *Client) WritePump() {
+func (c *Client) WritePump(ctx context.Context) {
+	_, span := otel.Tracer("wsController").Start(ctx, "WritePump")
+
 	ticker := time.NewTicker(pingPeriod)
 
 	defer func() {
 		ticker.Stop()
 		c.Conn.Close()
+		span.End()
 	}()
 
 	for {
@@ -184,6 +209,8 @@ func (c *Client) WritePump() {
 
 			w, err := c.Conn.NextWriter(websocket.TextMessage)
 			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 				return
 			}
 			w.Write(message)
@@ -201,6 +228,8 @@ func (c *Client) WritePump() {
 		case <-ticker.C:
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 				return
 			}
 		}

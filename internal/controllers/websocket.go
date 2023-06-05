@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"go.opentelemetry.io/otel"
 )
 
 var upgrader = websocket.Upgrader{
@@ -75,6 +76,9 @@ func NewWsController() (WsController, error) {
 }
 
 func (c *wsController) Home(ctx *gin.Context) {
+	newCtx, span := otel.Tracer("wsController").Start(ctx, "Home")
+	defer span.End()
+
 	conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -110,8 +114,8 @@ func (c *wsController) Home(ctx *gin.Context) {
 
 		// Allow collection of memory referenced by the caller by doing all work in
 		// new goroutines.
-		go client.WritePump()
-		go client.ReadPump()
+		go client.WritePump(newCtx)
+		go client.ReadPump(newCtx)
 
 		msg := []byte("[\"EOSE\", \"" + roomName + "\"]")
 		client.Send <- msg

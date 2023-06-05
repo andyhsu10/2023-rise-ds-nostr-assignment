@@ -2,6 +2,7 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
 	"distrise/internal/middlewares"
 )
@@ -29,6 +30,7 @@ func newRouter() (*gin.Engine, error) {
 	}
 
 	engine.Use(middleware.Cors.Cors())
+	engine.Use(otelgin.Middleware("distrise-relay"))
 
 	err = InitWsRouter(engine, "/")
 	if err != nil {
