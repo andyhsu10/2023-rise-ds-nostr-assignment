@@ -25,6 +25,31 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+  relay:
+    depends_on:
+      - cockroach
+    build:
+      context: .
+      dockerfile: relay.Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - 8080:$SERVER_PORT
+    stdin_open: true
+    tty: true
+  aggregator:
+    depends_on:
+      - cockroach
+      - rabbitmq
+    build:
+      context: .
+      dockerfile: aggregator.Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - 8081:$SERVER_PORT
+    stdin_open: true
+    tty: true
 
 volumes:
   cockroachdb:
