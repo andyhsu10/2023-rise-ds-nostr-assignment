@@ -13,7 +13,7 @@ services:
       COCKROACH_PASSWORD: ${DB_PASSWORD}
     ports:
       - "26257:26257"
-      - "8081:8080"
+      - "8090:8080"
     volumes:
       - cockroachdb:/cockroach/cockroach-data
   rabbitmq:
