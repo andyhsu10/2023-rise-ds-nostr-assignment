@@ -25,6 +25,8 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    volumes:
+      - ~/log/rabbitmq:/var/log/rabbitmq
   relay:
     depends_on:
       - cockroach
