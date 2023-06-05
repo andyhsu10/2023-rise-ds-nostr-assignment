@@ -133,4 +133,5 @@ Relay URL: `wss://andyhsu10.sefo.fi`
 - [Cockroach Labs - Start a single-node cluster](https://www.cockroachlabs.com/docs/stable/start-a-local-cluster-in-docker-linux.html#start-a-single-node-cluster)
 - [Build a Go App with CockroachDB and GORM](https://www.cockroachlabs.com/docs/v22.2/build-a-go-app-with-cockroachdb-gorm)
 - [RabbitMQ tutorial - "Hello World!"](https://www.rabbitmq.com/tutorials/tutorial-one-go.html)
+- [OpenTelemetry - Getting Started](https://opentelemetry.io/docs/instrumentation/go/getting-started/)
 - [OpenTelemetry Tracing API for Go](https://uptrace.dev/opentelemetry/go-tracing.html)
