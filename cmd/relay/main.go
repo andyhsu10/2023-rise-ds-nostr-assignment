@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -10,6 +11,8 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -27,6 +30,16 @@ func newExporter(w io.Writer) (trace.SpanExporter, error) {
 	)
 }
 
+func newHttpExporter(ctx context.Context) (trace.SpanExporter, error) {
+	client := otlptracehttp.NewClient()
+	exporter, err := otlptrace.New(ctx, client)
+	if err != nil {
+		return nil, fmt.Errorf("creating OTLP trace exporter: %w", err)
+	}
+
+	return exporter, nil
+}
+
 // newResource returns a resource describing this application.
 func newResource() *resource.Resource {
 	r, _ := resource.Merge(
@@ -42,6 +55,7 @@ func newResource() *resource.Resource {
 }
 
 func main() {
+	ctx := context.Background()
 	l := log.New(os.Stdout, "", 0)
 
 	// Write telemetry data to a file.
@@ -56,12 +70,18 @@ func main() {
 		l.Fatal(err)
 	}
 
+	httpExp, err := newHttpExporter(ctx)
+	if err != nil {
+		l.Fatal(err)
+	}
+
 	tp := trace.NewTracerProvider(
 		trace.WithBatcher(exp),
+		trace.WithBatcher(httpExp),
 		trace.WithResource(newResource()),
 	)
 	defer func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
+		if err := tp.Shutdown(ctx); err != nil {
 			l.Fatal(err)
 		}
 	}()

@@ -1,0 +1,31 @@
+receivers:
+  hostmetrics:
+    scrapers:
+      load:
+      cpu:
+      disk:
+      filesystem:
+      memory:
+      network:
+      paging:
+      process:
+
+processors:
+  batch:
+    timeout: 10s
+
+exporters:
+  datadog:
+    api:
+      key: "d86c9eb09dd97c7f83aedc0f85b45ff7"
+
+service:
+  pipelines:
+    traces:
+      receivers: [hostmetrics]
+      processors: [batch]
+      exporters: [datadog]
+    metrics:
+      receivers: [hostmetrics]
+      processors: [batch]
+      exporters: [datadog]
