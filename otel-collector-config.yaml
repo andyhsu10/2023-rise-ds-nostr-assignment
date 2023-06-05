@@ -17,7 +17,7 @@ processors:
 exporters:
   datadog:
     api:
-      key: "d86c9eb09dd97c7f83aedc0f85b45ff7"
+      key: "<DATADOG_API_KEY>"
 
 service:
   pipelines:

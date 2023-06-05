@@ -36,6 +36,11 @@
 - Start the aggregator by: `make aggregate`
 - To see the events stored in DB: `make view`
 
+### Phase 5
+
+- Copy `.env.example` to `.env` and fill in the values. To set up multiple relays, set the value of `RELAY_URLS` to a comma-separated list of relay URLs.
+- Start the relay and aggregator by: `docker compose up -d`
+
 ## Questions
 
 ### Phase 1
@@ -98,9 +103,26 @@ Please provide a short writeup of why you chose these metrics, answering the fol
 
 1. Why did you choose these 5 metrics?
 
+➡️ I host my relay on an Ubuntu server on GCP, and I choose Datadog trail for collecting the metrics. Setting up the datadog agent is quite easy on the Ubuntu server, but installing the integration like Nginx and RabbitMQ took me a while. The datadog agent and the integrations already collect lots of metrics, including: 1. the usage of CPU, memory, disk, and network of the host server, 2. the connection status of the nginx, 3. memory usage, queue size, and connection status of the RabbitMQ. I think these metrics are enough for me to monitor the status of the relay and aggregator. These metrics can help me understanding the load of the server and the status of the services running on the server. For example, if the CPU usage is high, I might need to scale up the server or the RabbitMQ instance, or if connections of the Nginx is high, I might need to scale up the relay.
+
 2. What kind of errors or issues do you expect them to help you monitor?
 
+➡️ I expect them to monitor the server and the service health. For example, if the storage of the server is full, it might mean the Cockroach DB is storing to much data of the events, and I might need to scale up the storage of my VM to let the aggregator keeps storing new events.
+
 3. If you had more time, what other tools would you use or metrics would you instrument and why?
+
+➡️ Besides getting metrics from Nginx and RabbitMQ, I also tried to use OpenTelemetry to collect traces of my relay server. Sadly, because of limited time I did not pass those data to the datadog successfully. As a result, I would spend some time digging the usage of the OpenTelemetry. Also, I might consider using Prometheus and Grafana to monitor the metrics. They are also popular & free tools for monitoring and I want to try them out too.
+
+## Datadog Dashboards
+
+- [System - Metrics](https://p.ap1.datadoghq.com/sb/020745ac-0353-11ee-a94b-da7ad0900009-640899023508a05cdb5d8ffcdd515956)
+- [NGINX - Metrics](https://p.ap1.datadoghq.com/sb/020745ac-0353-11ee-a94b-da7ad0900009-565bf790ee2917c03d02f2a57f8b63cf)
+- [RabbitMQ Overview (OpenMetrics Version)](https://p.ap1.datadoghq.com/sb/020745ac-0353-11ee-a94b-da7ad0900009-90cc081ce68838d2d0664e2a4ef6c170)
+
+## Deployment
+
+Relay and aggregator are deployed on GCP.
+Relay URL: `wss://andyhsu10.sefo.fi`
 
 ## References
 
@@ -111,3 +133,4 @@ Please provide a short writeup of why you chose these metrics, answering the fol
 - [Cockroach Labs - Start a single-node cluster](https://www.cockroachlabs.com/docs/stable/start-a-local-cluster-in-docker-linux.html#start-a-single-node-cluster)
 - [Build a Go App with CockroachDB and GORM](https://www.cockroachlabs.com/docs/v22.2/build-a-go-app-with-cockroachdb-gorm)
 - [RabbitMQ tutorial - "Hello World!"](https://www.rabbitmq.com/tutorials/tutorial-one-go.html)
+- [OpenTelemetry Tracing API for Go](https://uptrace.dev/opentelemetry/go-tracing.html)
